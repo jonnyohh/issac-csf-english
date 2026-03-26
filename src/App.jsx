@@ -98,13 +98,10 @@ function useViewport() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  return {
-    if (isLoading) {
-  return <div style={{ padding: 24, fontFamily: "sans-serif" }}>불러오는 중...</div>;
-}
-    isMobile: width < 768,
-    isTablet: width >= 768 && width < 1100
-  };
+return {
+  isMobile: width < 768,
+  isTablet: width >= 768 && width < 1100
+};
 }
 
 function getStyles({ isMobile, isTablet }) {
