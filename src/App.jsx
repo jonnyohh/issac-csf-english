@@ -8,7 +8,7 @@ const supabase =
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
-const sentences = [
+const SAMPLE_SENTENCES = [
   {
     id: "1",
     situation: "기호 표현",
@@ -279,58 +279,59 @@ function getStyles({ isMobile, isTablet }) {
 }
 
 export default function IssacCsfEnglishApp() {
+  const [sentences, setSentences] = useState(SAMPLE_SENTENCES);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState("local");
+
   const loadSentences = async () => {
-  setIsLoading(true);
+    setIsLoading(true);
 
-  try {
-    if (!supabase) {
-      setSentences(sentences);
+    try {
+      if (!supabase) {
+        setSentences(SAMPLE_SENTENCES);
+        setDataSource("local");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("csf_sentences")
+        .select(
+          "id, situation, level, korean, english, structure, pattern, meaning_type, sort_order"
+        )
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+
+      const normalized = (data || []).map((item, index) => ({
+        id: item.id,
+        situation: item.situation || "기타",
+        level: Number(item.level) || 1,
+        korean: item.korean || "",
+        english: item.english || "",
+        structure: item.structure || "",
+        pattern: item.pattern || "",
+        meaningType: item.meaning_type || "",
+        sort_order: Number.isFinite(item.sort_order) ? item.sort_order : index,
+      }));
+
+      if (normalized.length > 0) {
+        setSentences(normalized);
+        setDataSource("supabase");
+      } else {
+        setSentences(SAMPLE_SENTENCES);
+        setDataSource("local");
+      }
+    } catch (error) {
+      console.error(error);
+      setSentences(SAMPLE_SENTENCES);
       setDataSource("local");
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    const { data, error } = await supabase
-      .from("csf_sentences")
-      .select(
-        "id, situation, level, korean, english, structure, pattern, meaning_type, sort_order"
-      )
-      .order("sort_order", { ascending: true });
-
-    if (error) throw error;
-
-    const normalized = (data || []).map((item, index) => ({
-      id: item.id,
-      situation: item.situation || "기타",
-      level: Number(item.level) || 1,
-      korean: item.korean || "",
-      english: item.english || "",
-      structure: item.structure || "",
-      pattern: item.pattern || "",
-      meaningType: item.meaning_type || "",
-      sort_order: Number.isFinite(item.sort_order) ? item.sort_order : index,
-    }));
-
-    if (normalized.length > 0) {
-      setSentences(normalized);
-      setDataSource("supabase");
-    } else {
-      setSentences(sentences);
-      setDataSource("local");
-    }
-  } catch (error) {
-    console.error(error);
-    setSentences(sentences);
-    setDataSource("local");
-  } finally {
-    setIsLoading(false);
-  }
+  };
   useEffect(() => {
   loadSentences();
 }, []);
-};
-  const [sentences, setSentences] = useState(sentences);
-  const [isLoading, setIsLoading] = useState(true);
-  const [dataSource, setDataSource] = useState("local");
   const viewport = useViewport();
   const styles = getStyles(viewport);
   const timeoutRef = useRef(null);
@@ -350,9 +351,9 @@ export default function IssacCsfEnglishApp() {
   const [openSituations, setOpenSituations] = useState({});
 
   const situations = useMemo(
-    () => Array.from(new Set(sentences.map((item) => item.situation))),
-    []
-  );
+  () => Array.from(new Set(sentences.map((item) => item.situation))),
+  [sentences]
+);
   const levels = [1, 2, 3, 4, 5];
 
   const baseFiltered = useMemo(() => {
@@ -363,7 +364,7 @@ export default function IssacCsfEnglishApp() {
         selectedLevels.length === 0 || selectedLevels.includes(item.level);
       return situationMatch && levelMatch;
     });
-  }, [selectedSituations, selectedLevels]);
+}, [sentences, selectedSituations, selectedLevels]);
 
   const groupedForLearning = useMemo(() => {
     const map = new Map();
@@ -476,6 +477,9 @@ export default function IssacCsfEnglishApp() {
     }));
   };
 
+  if (isLoading) {
+  return <div style={{ padding: 24, fontFamily: "sans-serif" }}>불러오는 중...</div>;
+}
   return (
     <div style={styles.page}>
       <div style={styles.container}>
