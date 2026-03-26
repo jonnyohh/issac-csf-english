@@ -89,19 +89,24 @@ function stopSpeech(timeoutRef) {
 }
 
 function useViewport() {
-  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
 
   useEffect(() => {
-    if (typeof window === "undefined") return undefined;
+    if (typeof window === "undefined") return;
+
     const onResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", onResize);
+
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-return {
-  isMobile: width < 768,
-  isTablet: width >= 768 && width < 1100
-};
+  return {
+    width,
+    isMobile: width < 768,
+    isTablet: width >= 768 && width < 1100,
+  };
 }
 
 function getStyles({ isMobile, isTablet }) {
