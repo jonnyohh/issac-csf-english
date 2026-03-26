@@ -1,6 +1,14 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const SENTENCES = [
+const supabase =
+  SUPABASE_URL && SUPABASE_ANON_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+const sentences = [
   {
     id: "1",
     situation: "기호 표현",
@@ -91,6 +99,9 @@ function useViewport() {
   }, []);
 
   return {
+    if (isLoading) {
+  return <div style={{ padding: 24, fontFamily: "sans-serif" }}>불러오는 중...</div>;
+}
     isMobile: width < 768,
     isTablet: width >= 768 && width < 1100
   };
@@ -266,6 +277,58 @@ function getStyles({ isMobile, isTablet }) {
 }
 
 export default function IssacCsfEnglishApp() {
+  const loadSentences = async () => {
+  setIsLoading(true);
+
+  try {
+    if (!supabase) {
+      setSentences(sentences);
+      setDataSource("local");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("csf_sentences")
+      .select(
+        "id, situation, level, korean, english, structure, pattern, meaning_type, sort_order"
+      )
+      .order("sort_order", { ascending: true });
+
+    if (error) throw error;
+
+    const normalized = (data || []).map((item, index) => ({
+      id: item.id,
+      situation: item.situation || "기타",
+      level: Number(item.level) || 1,
+      korean: item.korean || "",
+      english: item.english || "",
+      structure: item.structure || "",
+      pattern: item.pattern || "",
+      meaningType: item.meaning_type || "",
+      sort_order: Number.isFinite(item.sort_order) ? item.sort_order : index,
+    }));
+
+    if (normalized.length > 0) {
+      setSentences(normalized);
+      setDataSource("supabase");
+    } else {
+      setSentences(sentences);
+      setDataSource("local");
+    }
+  } catch (error) {
+    console.error(error);
+    setSentences(sentences);
+    setDataSource("local");
+  } finally {
+    setIsLoading(false);
+  }
+  useEffect(() => {
+  loadSentences();
+}, []);
+};
+  const [sentences, setSentences] = useState(sentences);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState("local");
   const viewport = useViewport();
   const styles = getStyles(viewport);
   const timeoutRef = useRef(null);
@@ -285,13 +348,13 @@ export default function IssacCsfEnglishApp() {
   const [openSituations, setOpenSituations] = useState({});
 
   const situations = useMemo(
-    () => Array.from(new Set(SENTENCES.map((item) => item.situation))),
+    () => Array.from(new Set(sentences.map((item) => item.situation))),
     []
   );
   const levels = [1, 2, 3, 4, 5];
 
   const baseFiltered = useMemo(() => {
-    return SENTENCES.filter((item) => {
+    return sentences.filter((item) => {
       const situationMatch =
         selectedSituations.length === 0 || selectedSituations.includes(item.situation);
       const levelMatch =
@@ -419,8 +482,9 @@ export default function IssacCsfEnglishApp() {
             <div>
               <h1 style={styles.title}>Issac CSF English</h1>
               <p style={styles.helper}>
-                상황, 난이도, 문장 구조를 기준으로 학습하고 훈련하는 영어 출력 서비스
+                영어로 생각하고 말할 수 있는 그날까지 화이팅~
               </p>
+              <div style={styles.chip}>데이터 소스: {dataSource}</div>
             </div>
             <div style={styles.buttonRow}>
               <button
