@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -43,39 +43,6 @@ const SAMPLE_SENTENCES = [
     meaningType: "가능",
     sort_order: 2,
   },
-  {
-    id: "4",
-    situation: "이유 설명",
-    level: 2,
-    korean: "나는 피곤해서 집에 가고 싶어.",
-    english: "I want to go home because I am tired.",
-    structure: "복합문",
-    pattern: "because + be + 형용사",
-    meaningType: "이유",
-    sort_order: 3,
-  },
-  {
-    id: "5",
-    situation: "기호 표현",
-    level: 2,
-    korean: "나는 아침에 커피 마시는 것을 좋아해.",
-    english: "I like drinking coffee in the morning.",
-    structure: "SVO",
-    pattern: "like + V-ing + time expression",
-    meaningType: "기호",
-    sort_order: 4,
-  },
-  {
-    id: "6",
-    situation: "가능 표현",
-    level: 2,
-    korean: "나는 혼자서 영어로 주문할 수 있어.",
-    english: "I can order in English by myself.",
-    structure: "SVO",
-    pattern: "can + 동사 + 부사구",
-    meaningType: "가능",
-    sort_order: 5,
-  },
 ];
 
 function speakText(text, lang = "en-US", rate = 1, onEnd) {
@@ -101,265 +68,89 @@ function useViewport() {
   );
 
   useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
+    if (typeof window === "undefined") return;
     const onResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", onResize);
-
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
   return {
-    width,
     isMobile: width < 768,
     isTablet: width >= 768 && width < 1100,
   };
 }
 
-function getStyles({ isMobile, isTablet }) {
-  const pagePad = isMobile ? 12 : isTablet ? 18 : 24;
-  const cardPad = isMobile ? 14 : 22;
+export default function App() {
+  const { isMobile, isTablet } = useViewport();
+  const timeoutRef = useRef(null);
 
-  return {
-    page: {
-      minHeight: "100vh",
-      background: "#f8fafc",
-      color: "#0f172a",
-      padding: pagePad,
-      boxSizing: "border-box",
-    },
-    container: {
-      maxWidth: 1180,
-      margin: "0 auto",
-    },
-    topCard: {
-      background: "white",
-      borderRadius: 18,
-      padding: cardPad,
-      border: "1px solid #e2e8f0",
-      boxShadow: "0 1px 2px rgba(15,23,42,0.05)",
-      marginBottom: 16,
-    },
-    grid: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr" : "320px minmax(0,1fr)",
-      gap: isMobile ? 12 : 18,
-      alignItems: "start",
-    },
-    card: {
-      background: "white",
-      borderRadius: 18,
-      padding: cardPad,
-      border: "1px solid #e2e8f0",
-      boxShadow: "0 1px 2px rgba(15,23,42,0.05)",
-    },
-    title: {
-      margin: 0,
-      fontSize: isMobile ? 24 : 32,
-      lineHeight: 1.15,
-    },
-    helper: {
-      margin: "8px 0 0 0",
-      color: "#64748b",
-      fontSize: 14,
-      lineHeight: 1.5,
-    },
-    topRow: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: isMobile ? "stretch" : "flex-start",
-      flexDirection: isMobile ? "column" : "row",
-      gap: 12,
-    },
-    buttonRow: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap",
-      width: isMobile ? "100%" : "auto",
-    },
-    button: {
-      border: "1px solid #cbd5e1",
-      background: "white",
-      borderRadius: 10,
-      minHeight: 42,
-      padding: "10px 14px",
-      fontSize: 14,
-      cursor: "pointer",
-      flex: isMobile ? 1 : "0 0 auto",
-    },
-    primaryButton: {
-      border: "1px solid #0f172a",
-      background: "#0f172a",
-      color: "white",
-      borderRadius: 10,
-      minHeight: 42,
-      padding: "10px 14px",
-      fontSize: 14,
-      cursor: "pointer",
-      flex: isMobile ? 1 : "0 0 auto",
-    },
-    sectionTitle: {
-      marginTop: 0,
-      marginBottom: 14,
-      fontSize: 18,
-    },
-    filterGroup: {
-      marginBottom: 18,
-    },
-    filterLabel: {
-      display: "block",
-      marginBottom: 8,
-      fontSize: 14,
-      fontWeight: 600,
-    },
-    checkboxList: {
-      display: "grid",
-      gap: 8,
-      fontSize: 14,
-    },
-    accordionCard: {
-      border: "1px solid #e2e8f0",
-      borderRadius: 14,
-      overflow: "hidden",
-      background: "#fff",
-    },
-    accordionHeader: {
-      padding: "14px 16px",
-      background: "#f8fafc",
-      borderBottom: "1px solid #e2e8f0",
-      fontWeight: 700,
-      fontSize: 15,
-    },
-    sentenceCard: {
-      border: "1px solid #e2e8f0",
-      borderRadius: 12,
-      padding: isMobile ? 14 : 16,
-      background: "#fff",
-    },
-    metaRow: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap",
-      marginTop: 10,
-      marginBottom: 12,
-    },
-    chip: {
-      fontSize: 12,
-      padding: "5px 8px",
-      borderRadius: 999,
-      background: "#f1f5f9",
-      color: "#475569",
-    },
-    trainingPrompt: {
-      background: "#f8fafc",
-      border: "1px solid #e2e8f0",
-      borderRadius: 14,
-      padding: isMobile ? 16 : 24,
-    },
-    trainingKorean: {
-      fontSize: isMobile ? 22 : 32,
-      fontWeight: 700,
-      lineHeight: 1.4,
-      marginTop: 8,
-    },
-    answerBox: {
-      background: "#ecfdf5",
-      border: "1px solid #a7f3d0",
-      borderRadius: 14,
-      padding: isMobile ? 16 : 18,
-      fontSize: isMobile ? 19 : 24,
-      fontWeight: 700,
-      lineHeight: 1.5,
-      marginTop: 14,
-    },
-    select: {
-      width: "100%",
-      boxSizing: "border-box",
-      border: "1px solid #cbd5e1",
-      borderRadius: 10,
-      padding: "12px 14px",
-      fontSize: 15,
-      minHeight: 44,
-      background: "white",
-    },
-  };
-}
-
-export default function IssacCsfEnglishApp() {
   const [sentences, setSentences] = useState(SAMPLE_SENTENCES);
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState("local");
 
-  const viewport = useViewport();
-  const styles = getStyles(viewport);
-  const timeoutRef = useRef(null);
-
   const [mode, setMode] = useState("learn");
   const [selectedSituations, setSelectedSituations] = useState([]);
   const [selectedLevels, setSelectedLevels] = useState([]);
+
   const [questionCount, setQuestionCount] = useState("10");
   const [englishSpeed, setEnglishSpeed] = useState("1");
   const [playMode, setPlayMode] = useState("sequence");
   const [delaySeconds, setDelaySeconds] = useState(3);
-  const [englishRepeat, setEnglishRepeat] = useState(1);
+
   const [isTraining, setIsTraining] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhase, setCurrentPhase] = useState("idle");
   const [manualReveal, setManualReveal] = useState(false);
-  const [openSituations, setOpenSituations] = useState({});
-
-  const loadSentences = async () => {
-    setIsLoading(true);
-
-    try {
-      if (!supabase) {
-        setSentences(SAMPLE_SENTENCES);
-        setDataSource("local");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("csf_sentences")
-        .select(
-          "id, situation, level, korean, english, structure, pattern, meaning_type, sort_order"
-        )
-        .order("sort_order", { ascending: true });
-
-      if (error) throw error;
-
-      const normalized = (data || []).map((item, index) => ({
-        id: item.id,
-        situation: item.situation || "기타",
-        level: Number(item.level) || 1,
-        korean: item.korean || "",
-        english: item.english || "",
-        structure: item.structure || "",
-        pattern: item.pattern || "",
-        meaningType: item.meaning_type || "",
-        sort_order: Number.isFinite(item.sort_order) ? item.sort_order : index,
-      }));
-
-      if (normalized.length > 0) {
-        setSentences(normalized);
-        setDataSource("supabase");
-      } else {
-        setSentences(SAMPLE_SENTENCES);
-        setDataSource("local");
-      }
-    } catch (error) {
-      console.error(error);
-      setSentences(SAMPLE_SENTENCES);
-      setDataSource("local");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const loadSentences = async () => {
+      setIsLoading(true);
+      try {
+        if (!supabase) {
+          setSentences(SAMPLE_SENTENCES);
+          setDataSource("local");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("csf_sentences")
+          .select(
+            "id, situation, level, korean, english, structure, pattern, meaning_type, sort_order"
+          )
+          .order("sort_order", { ascending: true });
+
+        if (error) throw error;
+
+        const normalized = (data || []).map((item, index) => ({
+          id: item.id,
+          situation: item.situation || "기타",
+          level: Number(item.level) || 1,
+          korean: item.korean || "",
+          english: item.english || "",
+          structure: item.structure || "",
+          pattern: item.pattern || "",
+          meaningType: item.meaning_type || "",
+          sort_order: Number.isFinite(item.sort_order) ? item.sort_order : index,
+        }));
+
+        if (normalized.length > 0) {
+          setSentences(normalized);
+          setDataSource("supabase");
+        } else {
+          setSentences(SAMPLE_SENTENCES);
+          setDataSource("local");
+        }
+      } catch (error) {
+        console.error(error);
+        setSentences(SAMPLE_SENTENCES);
+        setDataSource("local");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     loadSentences();
-  }, []);
 
-  useEffect(() => {
     return () => stopSpeech(timeoutRef);
   }, []);
 
@@ -370,34 +161,27 @@ export default function IssacCsfEnglishApp() {
 
   const levels = [1, 2, 3, 4, 5];
 
-  const baseFiltered = useMemo(() => {
+  const filteredSentences = useMemo(() => {
     return sentences.filter((item) => {
-      const situationMatch =
+      const okSituation =
         selectedSituations.length === 0 || selectedSituations.includes(item.situation);
-      const levelMatch =
+      const okLevel =
         selectedLevels.length === 0 || selectedLevels.includes(item.level);
-      return situationMatch && levelMatch;
+      return okSituation && okLevel;
     });
   }, [sentences, selectedSituations, selectedLevels]);
 
-  const groupedForLearning = useMemo(() => {
+  const grouped = useMemo(() => {
     const map = new Map();
-
-    baseFiltered.forEach((item) => {
+    filteredSentences.forEach((item) => {
       if (!map.has(item.situation)) map.set(item.situation, []);
       map.get(item.situation).push(item);
     });
-
-    return Array.from(map.entries()).map(([situation, items]) => ({
-      situation,
-      items: items.sort(
-        (a, b) => a.level - b.level || a.english.localeCompare(b.english)
-      ),
-    }));
-  }, [baseFiltered]);
+    return Array.from(map.entries());
+  }, [filteredSentences]);
 
   const trainingRows = useMemo(() => {
-    let rows = [...baseFiltered];
+    let rows = [...filteredSentences];
 
     if (playMode === "random") {
       for (let i = rows.length - 1; i > 0; i -= 1) {
@@ -411,7 +195,7 @@ export default function IssacCsfEnglishApp() {
     }
 
     return rows;
-  }, [baseFiltered, playMode, questionCount]);
+  }, [filteredSentences, playMode, questionCount]);
 
   const currentItem = trainingRows[currentIndex] || null;
 
@@ -426,62 +210,39 @@ export default function IssacCsfEnglishApp() {
     }
 
     const item = trainingRows[currentIndex];
-
     setCurrentPhase("korean");
+
     speakText(item.korean, "ko-KR", 0.95, () => {
       setCurrentPhase("pause");
-
       timeoutRef.current = setTimeout(() => {
         setCurrentPhase("english");
-
-        let repeats = 0;
-        const playAnswer = () => {
-          repeats += 1;
-          speakText(item.english, "en-US", Number(englishSpeed), () => {
-            if (repeats < englishRepeat) {
-              timeoutRef.current = setTimeout(playAnswer, 700);
-            } else {
-              timeoutRef.current = setTimeout(() => {
-                setCurrentIndex((prev) => prev + 1);
-              }, 900);
-            }
-          });
-        };
-
-        playAnswer();
+        speakText(item.english, "en-US", Number(englishSpeed), () => {
+          timeoutRef.current = setTimeout(() => {
+            setCurrentIndex((prev) => prev + 1);
+          }, 900);
+        });
       }, delaySeconds * 1000);
     });
-  }, [
-    isTraining,
-    currentIndex,
-    trainingRows,
-    delaySeconds,
-    englishRepeat,
-    englishSpeed,
-  ]);
+  }, [isTraining, trainingRows, currentIndex, englishSpeed, delaySeconds]);
 
-  const toggleSituation = (situation) => {
+  const toggleSituation = (value) => {
     setSelectedSituations((prev) =>
-      prev.includes(situation)
-        ? prev.filter((item) => item !== situation)
-        : [...prev, situation]
+      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
     );
   };
 
-  const toggleLevel = (level) => {
+  const toggleLevel = (value) => {
     setSelectedLevels((prev) =>
-      prev.includes(level)
-        ? prev.filter((item) => item !== level)
-        : [...prev, level]
+      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
     );
   };
 
   const startTraining = () => {
     if (!trainingRows.length) return;
     stopSpeech(timeoutRef);
-    setManualReveal(false);
     setCurrentIndex(0);
     setCurrentPhase("idle");
+    setManualReveal(false);
     setIsTraining(true);
   };
 
@@ -491,55 +252,70 @@ export default function IssacCsfEnglishApp() {
     stopSpeech(timeoutRef);
   };
 
-  const toggleOpenSituation = (situation) => {
-    setOpenSituations((prev) => ({
-      ...prev,
-      [situation]: !prev[situation],
-    }));
+  const pageStyle = {
+    minHeight: "100vh",
+    background: "#f8fafc",
+    color: "#0f172a",
+    padding: isMobile ? 12 : isTablet ? 18 : 24,
+    boxSizing: "border-box",
+  };
+
+  const containerStyle = {
+    maxWidth: 1180,
+    margin: "0 auto",
+  };
+
+  const cardStyle = {
+    background: "white",
+    borderRadius: 16,
+    padding: isMobile ? 14 : 20,
+    border: "1px solid #e2e8f0",
   };
 
   if (isLoading) {
-    return (
-      <div style={{ padding: 24, fontFamily: "sans-serif" }}>불러오는 중...</div>
-    );
+    return <div style={{ padding: 24 }}>불러오는 중...</div>;
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.topCard}>
-          <div style={styles.topRow}>
+    <div style={pageStyle}>
+      <div style={containerStyle}>
+        <div style={{ ...cardStyle, marginBottom: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
             <div>
-              <h1 style={styles.title}>Issac CSF English</h1>
-              <p style={styles.helper}>
-                영어로 생각하고 말할 수 있는 그날까지 화이팅~
+              <h1 style={{ margin: 0, fontSize: isMobile ? 24 : 32 }}>
+                Issac CSF English
+              </h1>
+              <p style={{ margin: "8px 0 0 0", color: "#64748b" }}>
+                데이터 소스: {dataSource}
               </p>
-              <div style={styles.chip}>데이터 소스: {dataSource}</div>
             </div>
-            <div style={styles.buttonRow}>
-              <button
-                style={mode === "learn" ? styles.primaryButton : styles.button}
-                onClick={() => setMode("learn")}
-              >
-                학습 모드
-              </button>
-              <button
-                style={mode === "training" ? styles.primaryButton : styles.button}
-                onClick={() => setMode("training")}
-              >
-                훈련 모드
-              </button>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button onClick={() => setMode("learn")}>학습 모드</button>
+              <button onClick={() => setMode("training")}>훈련 모드</button>
             </div>
           </div>
         </div>
 
-        <div style={styles.grid}>
-          <div style={styles.card}>
-            <h2 style={styles.sectionTitle}>필터</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile || isTablet ? "1fr" : "320px 1fr",
+            gap: 16,
+          }}
+        >
+          <div style={cardStyle}>
+            <h2 style={{ marginTop: 0 }}>필터</h2>
 
-            <div style={styles.filterGroup}>
-              <div style={styles.filterLabel}>상황</div>
-              <div style={styles.checkboxList}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 8 }}>상황</div>
+              <div style={{ display: "grid", gap: 8 }}>
                 {situations.map((situation) => (
                   <label key={situation}>
                     <input
@@ -553,9 +329,9 @@ export default function IssacCsfEnglishApp() {
               </div>
             </div>
 
-            <div style={styles.filterGroup}>
-              <div style={styles.filterLabel}>난이도</div>
-              <div style={styles.checkboxList}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 8 }}>난이도</div>
+              <div style={{ display: "grid", gap: 8 }}>
                 {levels.map((level) => (
                   <label key={level}>
                     <input
@@ -571,12 +347,12 @@ export default function IssacCsfEnglishApp() {
 
             {mode === "training" && (
               <>
-                <div style={styles.filterGroup}>
-                  <div style={styles.filterLabel}>문항 수</div>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>문항 수</div>
                   <select
-                    style={styles.select}
                     value={questionCount}
                     onChange={(e) => setQuestionCount(e.target.value)}
+                    style={{ width: "100%" }}
                   >
                     <option value="5">5문항</option>
                     <option value="10">10문항</option>
@@ -585,12 +361,12 @@ export default function IssacCsfEnglishApp() {
                   </select>
                 </div>
 
-                <div style={styles.filterGroup}>
-                  <div style={styles.filterLabel}>영어 듣기 속도</div>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>영어 속도</div>
                   <select
-                    style={styles.select}
                     value={englishSpeed}
                     onChange={(e) => setEnglishSpeed(e.target.value)}
+                    style={{ width: "100%" }}
                   >
                     <option value="0.5">0.5배속</option>
                     <option value="0.75">0.75배속</option>
@@ -598,24 +374,24 @@ export default function IssacCsfEnglishApp() {
                   </select>
                 </div>
 
-                <div style={styles.filterGroup}>
-                  <div style={styles.filterLabel}>재생 방식</div>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>재생 방식</div>
                   <select
-                    style={styles.select}
                     value={playMode}
                     onChange={(e) => setPlayMode(e.target.value)}
+                    style={{ width: "100%" }}
                   >
                     <option value="sequence">순서 재생</option>
                     <option value="random">랜덤 재생</option>
                   </select>
                 </div>
 
-                <div style={styles.filterGroup}>
-                  <div style={styles.filterLabel}>정답 전 텀</div>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>정답 전 텀</div>
                   <select
-                    style={styles.select}
                     value={delaySeconds}
                     onChange={(e) => setDelaySeconds(Number(e.target.value))}
+                    style={{ width: "100%" }}
                   >
                     <option value={2}>2초</option>
                     <option value={3}>3초</option>
@@ -623,25 +399,9 @@ export default function IssacCsfEnglishApp() {
                   </select>
                 </div>
 
-                <div style={styles.filterGroup}>
-                  <div style={styles.filterLabel}>영어 정답 반복</div>
-                  <select
-                    style={styles.select}
-                    value={englishRepeat}
-                    onChange={(e) => setEnglishRepeat(Number(e.target.value))}
-                  >
-                    <option value={1}>1회</option>
-                    <option value={2}>2회</option>
-                  </select>
-                </div>
-
-                <div style={styles.buttonRow}>
-                  <button style={styles.primaryButton} onClick={startTraining}>
-                    시작
-                  </button>
-                  <button style={styles.button} onClick={stopTrainingFlow}>
-                    정지
-                  </button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={startTraining}>시작</button>
+                  <button onClick={stopTrainingFlow}>정지</button>
                 </div>
               </>
             )}
@@ -649,78 +409,50 @@ export default function IssacCsfEnglishApp() {
 
           <div style={{ display: "grid", gap: 14 }}>
             {mode === "learn" &&
-              (groupedForLearning.length === 0 ? (
-                <div style={styles.card}>선택한 조건에 맞는 문장이 없습니다.</div>
+              (grouped.length === 0 ? (
+                <div style={cardStyle}>선택한 조건에 맞는 문장이 없습니다.</div>
               ) : (
-                groupedForLearning.map((group) => {
-                  const isOpen = openSituations[group.situation] ?? true;
-
-                  return (
-                    <div key={group.situation} style={styles.accordionCard}>
-                      <button
-                        style={{
-                          ...styles.accordionHeader,
-                          width: "100%",
-                          textAlign: "left",
-                          cursor: "pointer",
-                          border: "none",
-                        }}
-                        onClick={() => toggleOpenSituation(group.situation)}
-                      >
-                        {group.situation} ({group.items.length})
-                      </button>
-
-                      {isOpen && (
-                        <div style={{ padding: 14, display: "grid", gap: 12 }}>
-                          {group.items.map((item) => (
-                            <div key={item.id} style={styles.sentenceCard}>
-                              <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-                                {item.korean}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: 18,
-                                  fontWeight: 700,
-                                  marginTop: 8,
-                                  lineHeight: 1.6,
-                                }}
-                              >
-                                {item.english}
-                              </div>
-                              <div style={styles.metaRow}>
-                                <span style={styles.chip}>구조: {item.structure}</span>
-                                <span style={styles.chip}>문형: {item.pattern}</span>
-                                <span style={styles.chip}>의미: {item.meaningType}</span>
-                                <span style={styles.chip}>난이도: {item.level}</span>
-                              </div>
-                              <div style={styles.buttonRow}>
-                                <button
-                                  style={styles.button}
-                                  onClick={() => speakText(item.korean, "ko-KR", 0.95)}
-                                >
-                                  한국어 듣기
-                                </button>
-                                <button
-                                  style={styles.button}
-                                  onClick={() => speakText(item.english, "en-US", 1)}
-                                >
-                                  영어 듣기
-                                </button>
-                              </div>
-                            </div>
-                          ))}
+                grouped.map(([situation, items]) => (
+                  <div key={situation} style={cardStyle}>
+                    <h3 style={{ marginTop: 0 }}>{situation}</h3>
+                    <div style={{ display: "grid", gap: 12 }}>
+                      {items.map((item) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 12,
+                            padding: 14,
+                          }}
+                        >
+                          <div>{item.korean}</div>
+                          <div style={{ marginTop: 8, fontWeight: 700 }}>
+                            {item.english}
+                          </div>
+                          <div style={{ marginTop: 10, fontSize: 13, color: "#64748b" }}>
+                            구조: {item.structure} / 문형: {item.pattern} / 의미:{" "}
+                            {item.meaningType} / 난이도: {item.level}
+                          </div>
+                          <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+                            <button onClick={() => speakText(item.korean, "ko-KR", 0.95)}>
+                              한국어 듣기
+                            </button>
+                            <button onClick={() => speakText(item.english, "en-US", 1)}>
+                              영어 듣기
+                            </button>
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  );
-                })
+                  </div>
+                ))
               ))}
 
             {mode === "training" && (
-              <div style={styles.card}>
-                <div style={styles.topRow}>
-                  <h2 style={{ ...styles.sectionTitle, marginBottom: 0 }}>훈련</h2>
-                  <div style={{ color: "#64748b", fontSize: 14 }}>
+              <div style={cardStyle}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <h2 style={{ marginTop: 0 }}>훈련</h2>
+                  <div>
                     {trainingRows.length
                       ? `${Math.min(currentIndex + 1, trainingRows.length)} / ${trainingRows.length}`
                       : "0 / 0"}
@@ -728,48 +460,42 @@ export default function IssacCsfEnglishApp() {
                 </div>
 
                 {!trainingRows.length ? (
-                  <div style={{ marginTop: 16 }}>선택한 조건에 맞는 문항이 없습니다.</div>
+                  <div>선택한 조건에 맞는 문항이 없습니다.</div>
                 ) : currentItem ? (
-                  <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
-                    <div style={styles.trainingPrompt}>
+                  <>
+                    <div
+                      style={{
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    >
                       <div style={{ color: "#64748b", fontSize: 14 }}>현재 문항</div>
-                      <div style={styles.trainingKorean}>{currentItem.korean}</div>
-                    </div>
-
-                    <div style={styles.sentenceCard}>
-                      <div style={{ color: "#64748b", fontSize: 14, marginBottom: 8 }}>
-                        현재 상태
-                      </div>
-                      <div style={{ lineHeight: 1.6 }}>
-                        {currentPhase === "idle" && "대기 중"}
-                        {currentPhase === "korean" && "한국어 cue 재생 중"}
-                        {currentPhase === "pause" && "영어를 먼저 말해보세요"}
-                        {currentPhase === "english" && "정답 영어 재생 중"}
+                      <div style={{ marginTop: 8, fontSize: isMobile ? 22 : 30, fontWeight: 700 }}>
+                        {currentItem.korean}
                       </div>
                     </div>
 
-                    <div style={styles.buttonRow}>
-                      <button
-                        style={styles.button}
-                        onClick={() => speakText(currentItem.korean, "ko-KR", 0.95)}
-                      >
+                    <div style={{ marginTop: 14 }}>
+                      현재 상태:{" "}
+                      {currentPhase === "idle" && "대기 중"}
+                      {currentPhase === "korean" && "한국어 cue 재생 중"}
+                      {currentPhase === "pause" && "영어를 먼저 말해보세요"}
+                      {currentPhase === "english" && "정답 영어 재생 중"}
+                    </div>
+
+                    <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button onClick={() => speakText(currentItem.korean, "ko-KR", 0.95)}>
                         한국어 다시 듣기
                       </button>
-                      <button
-                        style={styles.button}
-                        onClick={() => setManualReveal(!manualReveal)}
-                      >
+                      <button onClick={() => setManualReveal(!manualReveal)}>
                         {manualReveal ? "영어 숨기기" : "영어 보기"}
                       </button>
                       {manualReveal && (
                         <button
-                          style={styles.primaryButton}
                           onClick={() =>
-                            speakText(
-                              currentItem.english,
-                              "en-US",
-                              Number(englishSpeed)
-                            )
+                            speakText(currentItem.english, "en-US", Number(englishSpeed))
                           }
                         >
                           영어 정답 듣기
@@ -778,11 +504,23 @@ export default function IssacCsfEnglishApp() {
                     </div>
 
                     {manualReveal && (
-                      <div style={styles.answerBox}>{currentItem.english}</div>
+                      <div
+                        style={{
+                          marginTop: 14,
+                          background: "#ecfdf5",
+                          border: "1px solid #a7f3d0",
+                          borderRadius: 12,
+                          padding: 16,
+                          fontSize: isMobile ? 19 : 24,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {currentItem.english}
+                      </div>
                     )}
-                  </div>
+                  </>
                 ) : (
-                  <div style={{ marginTop: 16 }}>시작 버튼을 누르면 훈련이 시작됩니다.</div>
+                  <div>시작 버튼을 누르면 훈련이 시작됩니다.</div>
                 )}
               </div>
             )}
