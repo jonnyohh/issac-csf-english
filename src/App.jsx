@@ -81,9 +81,12 @@ function useViewport() {
 }
 
 export default function App() {
+  const [isFilterOpen, setIsFilterOpen] = useState(!isMobile && !isTablet);
+  useEffect(() => {
+  setIsFilterOpen(!isMobile && !isTablet);
+}, [isMobile, isTablet]);
   const { isMobile, isTablet } = useViewport();
   const timeoutRef = useRef(null);
-
   const [sentences, setSentences] = useState(SAMPLE_SENTENCES);
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState("local");
@@ -271,6 +274,45 @@ export default function App() {
     padding: isMobile ? 14 : 20,
     border: "1px solid #e2e8f0",
   };
+  const floatingFilterButtonStyle = {
+  position: "fixed",
+  right: isMobile ? 16 : 24,
+  bottom: isMobile ? 16 : "auto",
+  top: isMobile ? "auto" : 24,
+  zIndex: 1000,
+  width: 56,
+  height: 56,
+  borderRadius: "50%",
+  border: "none",
+  background: "#0f172a",
+  color: "white",
+  fontSize: 24,
+  fontWeight: 700,
+  boxShadow: "0 10px 25px rgba(15, 23, 42, 0.18)",
+  cursor: "pointer",
+};
+
+const filterPanelWrapperStyle = {
+  position: isMobile || isTablet ? "fixed" : "sticky",
+  top: isMobile || isTablet ? 0 : 24,
+  right: isMobile || isTablet ? 0 : "auto",
+  bottom: isMobile || isTablet ? 0 : "auto",
+  left: isMobile || isTablet ? 0 : "auto",
+  zIndex: 999,
+  padding: isMobile || isTablet ? 16 : 0,
+  background: isMobile || isTablet ? "rgba(15, 23, 42, 0.28)" : "transparent",
+  display: "flex",
+  alignItems: isMobile || isTablet ? "flex-end" : "stretch",
+  justifyContent: isMobile || isTablet ? "flex-end" : "stretch",
+};
+
+const filterPanelStyle = {
+  ...cardStyle,
+  width: isMobile ? "100%" : isTablet ? 380 : "100%",
+  maxWidth: isMobile ? "100%" : 420,
+  maxHeight: isMobile || isTablet ? "85vh" : "none",
+  overflowY: isMobile || isTablet ? "auto" : "visible",
+};
 
   if (isLoading) {
     return <div style={{ padding: 24 }}>불러오는 중...</div>;
@@ -278,6 +320,14 @@ export default function App() {
 
   return (
     <div style={pageStyle}>
+      <button
+  type="button"
+  aria-label="필터 열기"
+  style={floatingFilterButtonStyle}
+  onClick={() => setIsFilterOpen((prev) => !prev)}
+>
+  {isFilterOpen ? "×" : "☰"}
+</button>
       <div style={containerStyle}>
         <div style={{ ...cardStyle, marginBottom: 16 }}>
           <div
@@ -304,30 +354,227 @@ export default function App() {
         </div>
 
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile || isTablet ? "1fr" : "320px 1fr",
-            gap: 16,
-          }}
-        >
-          <div style={cardStyle}>
-            <h2 style={{ marginTop: 0 }}>필터</h2>
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile || isTablet ? "1fr" : "320px 1fr",
+    gap: 16,
+  }}
+>
+  {!isMobile && !isTablet && isFilterOpen && (
+    <div style={filterPanelStyle}>
+      <h2 style={{ marginTop: 0 }}>필터</h2>
 
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>상황</div>
-              <div style={{ display: "grid", gap: 8 }}>
-                {situations.map((situation) => (
-                  <label key={situation}>
-                    <input
-                      type="checkbox"
-                      checked={selectedSituations.includes(situation)}
-                      onChange={() => toggleSituation(situation)}
-                    />{" "}
-                    {situation}
-                  </label>
-                ))}
-              </div>
-            </div>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>상황</div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {situations.map((situation) => (
+            <label key={situation}>
+              <input
+                type="checkbox"
+                checked={selectedSituations.includes(situation)}
+                onChange={() => toggleSituation(situation)}
+              />{" "}
+              {situation}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>난이도</div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {levels.map((level) => (
+            <label key={level}>
+              <input
+                type="checkbox"
+                checked={selectedLevels.includes(level)}
+                onChange={() => toggleLevel(level)}
+              />{" "}
+              Level {level}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {mode === "training" && (
+        <>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>문항 수</div>
+            <select
+              value={questionCount}
+              onChange={(e) => setQuestionCount(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              <option value="5">5문항</option>
+              <option value="10">10문항</option>
+              <option value="20">20문항</option>
+              <option value="all">전체</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>영어 속도</div>
+            <select
+              value={englishSpeed}
+              onChange={(e) => setEnglishSpeed(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              <option value="0.5">0.5배속</option>
+              <option value="0.75">0.75배속</option>
+              <option value="1">1배속</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>재생 방식</div>
+            <select
+              value={playMode}
+              onChange={(e) => setPlayMode(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              <option value="sequence">순서 재생</option>
+              <option value="random">랜덤 재생</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>정답 전 텀</div>
+            <select
+              value={delaySeconds}
+              onChange={(e) => setDelaySeconds(Number(e.target.value))}
+              style={{ width: "100%" }}
+            >
+              <option value={2}>2초</option>
+              <option value={3}>3초</option>
+              <option value={5}>5초</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={startTraining}>시작</button>
+            <button onClick={stopTrainingFlow}>정지</button>
+          </div>
+        </>
+      )}
+    </div>
+  )}
+
+  <div style={{ display: "grid", gap: 14 }}>
+    {/* 기존 학습/훈련 본문 그대로 */}
+  </div>
+</div>
+
+{(isMobile || isTablet) && isFilterOpen && (
+  <div
+    style={filterPanelWrapperStyle}
+    onClick={() => setIsFilterOpen(false)}
+  >
+    <div
+      style={filterPanelStyle}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>필터</h2>
+        <button onClick={() => setIsFilterOpen(false)}>닫기</button>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>상황</div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {situations.map((situation) => (
+            <label key={situation}>
+              <input
+                type="checkbox"
+                checked={selectedSituations.includes(situation)}
+                onChange={() => toggleSituation(situation)}
+              />{" "}
+              {situation}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>난이도</div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {levels.map((level) => (
+            <label key={level}>
+              <input
+                type="checkbox"
+                checked={selectedLevels.includes(level)}
+                onChange={() => toggleLevel(level)}
+              />{" "}
+              Level {level}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {mode === "training" && (
+        <>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>문항 수</div>
+            <select
+              value={questionCount}
+              onChange={(e) => setQuestionCount(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              <option value="5">5문항</option>
+              <option value="10">10문항</option>
+              <option value="20">20문항</option>
+              <option value="all">전체</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>영어 속도</div>
+            <select
+              value={englishSpeed}
+              onChange={(e) => setEnglishSpeed(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              <option value="0.5">0.5배속</option>
+              <option value="0.75">0.75배속</option>
+              <option value="1">1배속</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>재생 방식</div>
+            <select
+              value={playMode}
+              onChange={(e) => setPlayMode(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              <option value="sequence">순서 재생</option>
+              <option value="random">랜덤 재생</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>정답 전 텀</div>
+            <select
+              value={delaySeconds}
+              onChange={(e) => setDelaySeconds(Number(e.target.value))}
+              style={{ width: "100%" }}
+            >
+              <option value={2}>2초</option>
+              <option value={3}>3초</option>
+              <option value={5}>5초</option>
+            </select>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
 
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontWeight: 700, marginBottom: 8 }}>난이도</div>
